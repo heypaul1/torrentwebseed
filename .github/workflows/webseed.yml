@@ -20,7 +20,7 @@ on:
         
 jobs:
   create_torrent:
-    runs-on: ubuntu-18.04	
+    runs-on: macos-latest	
     steps:
       - name: Maximize disk space
         if: inputs.maximize_disk_space
