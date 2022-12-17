@@ -1,0 +1,48 @@
+name: webseed
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: Name of the torrent file
+        required: true
+      comment:
+        description: Comment
+        required: true
+      url:
+        description: URL of the file to seed
+        required: true
+      file_name:
+        description: File name of the file in the torrent
+        required: true
+      maximize_disk_space:
+        description: Maximize disk space. Check if getting out of disk space error
+        type: boolean
+        
+jobs:
+  create_torrent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Maximize disk space
+        if: inputs.maximize_disk_space
+        uses: easimon/maximize-build-space@v6
+        with:
+          remove-dotnet: true
+          remove-android: true
+          remove-haskell: true
+          
+      - name: Install torrenttools
+        run: |
+          sudo add-apt-repository -y ppa:fbdtemme/torrenttools
+          sudo apt-get -qq -y install torrenttools
+          
+      - name: Download file
+        run: aria2c -x 16 -o "${{ inputs.file_name }}" "${{ inputs.url }}"
+        
+      - name: Create torrent using torrenttools
+        run: torrenttools create -v "1" -o "${{ inputs.name }}.torrent" -w "${{ inputs.url }}" -c "${{ inputs.comment }}" -l "auto" -s "torrent-webseed-creator" "${{ inputs.file_name }}"
+        
+      - name: Upload torrent file
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.name }}
+          path: ${{ inputs.name }}.torrent
